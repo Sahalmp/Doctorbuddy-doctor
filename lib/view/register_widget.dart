@@ -8,8 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:prodoctor/colors.dart';
-import 'package:prodoctor/loginscreen.dart';
+import 'package:prodoctor/model/colors.dart';
+import 'package:prodoctor/view/loginscreen.dart';
 import 'package:prodoctor/model/category_model.dart';
 import 'package:prodoctor/model/doctormodel.dart';
 
@@ -276,200 +276,160 @@ class _RegisterMoreDetailsState extends State<RegisterMoreDetails> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      body: ListView(
+      body: Column(
         children: [
-          SafeArea(
-              child: Padding(
-            padding: const EdgeInsets.all(30.0),
-            child: Form(
-                key: formkey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(
-                      height: 30,
-                    ),
-                    Text(
-                      "Hello, ${widget.name}",
-                      style: const TextStyle(
-                          fontSize: 25, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(
-                      height: 30,
-                    ),
-                    Column(
-                      children: [
-                        Field(
-                          icon: Icons.email_rounded,
-                          control: _emailcontroller,
-                          texthint: "Email",
-                          type: TextInputType.emailAddress,
-                          validate: (value) {
-                            RegExp regex = RegExp(emailpattern);
-                            if (value == null ||
-                                value.isEmpty ||
-                                !regex.hasMatch(value)) {
-                              return 'Enter a valid email address';
-                            } else {
-                              return null;
-                            }
-                          },
-                        ),
-                        const SizedBox(
-                          height: 20,
-                        ),
-                        Field(
-                          icon: Icons.phone,
-                          control: _phoneController,
-                          texthint: 'Phone No',
-                          type: TextInputType.phone,
-                          validate: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Enter a valid phone number';
-                            } else if (value.length < 10) {
-                              return '10 digits required ';
-                            } else {
-                              return null;
-                            }
-                          },
-                        ),
-                        const SizedBox(
-                          height: 20,
-                        ),
-                        Field(
-                          icon: Icons.key_sharp,
-                          control: _passwordController,
-                          texthint: 'Password',
-                          type: TextInputType.visiblePassword,
-                          validate: (value) {
-                            if (value == null ||
-                                value.isEmpty ||
-                                value.length <= 6) {
-                              return 'Enter a valid Password (min 6 char)';
-                            } else {
-                              return null;
-                            }
-                          },
-                        ),
-                        const SizedBox(
-                          height: 20,
-                        ),
-                        Field(
-                          icon: Icons.key_sharp,
-                          control: _confirmpasswordcontroller,
-                          texthint: 'Confirm Password',
-                          type: TextInputType.visiblePassword,
-                          validate: (value) {
-                            if (value == null ||
-                                value.isEmpty ||
-                                _passwordController.text != value.toString()) {
-                              return 'Password does not match';
-                            } else {
-                              return null;
-                            }
-                          },
-                        ),
-                        const SizedBox(
-                          height: 20,
-                        ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          "upload photo :",
-                          style: TextStyle(
-                            fontSize: 18,
+          Expanded(
+            child: ListView(
+              children: [
+                SafeArea(
+                    child: Padding(
+                  padding: const EdgeInsets.all(30.0),
+                  child: Form(
+                      key: formkey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(
+                            height: 30,
                           ),
-                        ),
-                        ElevatedButton(
-                            onPressed: () async {
-                              final imagename = DateTime.now();
-                              img = await _picker.pickImage(
-                                  source: ImageSource.gallery);
-                              if (img != null) {
-                                File file = File(img!.path);
-                                final ref = FirebaseStorage.instance
-                                    .ref()
-                                    .child("doctor/$imagename");
-                                uploadTask = ref.putFile(file);
-                                setState(() {});
-
-                                uploadTask?.then((snap) async =>
-                                    image = await snap.ref.getDownloadURL());
-                              }
-                            },
-                            child: const Text("Upload"))
-                      ],
-                    ),
-                    StreamBuilder<TaskSnapshot>(
-                        stream: uploadTask?.snapshotEvents,
-                        builder:
-                            (context, AsyncSnapshot<TaskSnapshot> snapshot) {
-                          if (snapshot.hasData) {
-                            final data = snapshot.data!;
-                            double progress =
-                                (data.bytesTransferred / data.totalBytes);
-                            if (progress != 1) {
-                              return SizedBox(
-                                height: 50,
-                                child: Column(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(20),
-                                      child: LinearProgressIndicator(
-                                        value: progress,
-                                        minHeight: 20.0,
-                                        backgroundColor: Colors.grey.shade100,
-                                        color: primary,
-                                      ),
-                                    ),
-                                    Text(
-                                      "uploading image ${progress * 100} %",
-                                      style: const TextStyle(color: primary),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            } else {
-                              return Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Text(
-                                    'Upload Complete',
-                                    style: TextStyle(
-                                      color: Colors.green,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            }
-                          } else {
-                            return const SizedBox(
-                              height: 22,
-                            );
-                          }
-                        }),
-                    const SizedBox(
-                      height: 150,
-                    ),
-                    // Spacer(),
-                    Center(
-                        child: Row(
-                      children: [
-                        Expanded(
-                            child: ElevatedButton(
-                                onPressed: () {
-                                  signup(_emailcontroller.text.trim(),
-                                      _passwordController.text.trim());
+                          Text(
+                            "Hello, ${widget.name}",
+                            style: const TextStyle(
+                                fontSize: 25, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(
+                            height: 30,
+                          ),
+                          Column(
+                            children: [
+                              Field(
+                                icon: Icons.email_rounded,
+                                control: _emailcontroller,
+                                texthint: "Email",
+                                type: TextInputType.emailAddress,
+                                validate: (value) {
+                                  RegExp regex = RegExp(emailpattern);
+                                  if (value == null ||
+                                      value.isEmpty ||
+                                      !regex.hasMatch(value)) {
+                                    return 'Enter a valid email address';
+                                  } else {
+                                    return null;
+                                  }
                                 },
-                                child: const Text("Submit"))),
-                      ],
-                    ))
-                  ],
+                              ),
+                              const SizedBox(
+                                height: 20,
+                              ),
+                              Field(
+                                icon: Icons.phone,
+                                control: _phoneController,
+                                texthint: 'Phone No',
+                                type: TextInputType.phone,
+                                validate: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Enter a valid phone number';
+                                  } else if (value.length < 10) {
+                                    return '10 digits required ';
+                                  } else {
+                                    return null;
+                                  }
+                                },
+                              ),
+                              const SizedBox(
+                                height: 20,
+                              ),
+                              Field(
+                                icon: Icons.key_sharp,
+                                control: _passwordController,
+                                texthint: 'Password',
+                                type: TextInputType.visiblePassword,
+                                validate: (value) {
+                                  if (value == null ||
+                                      value.isEmpty ||
+                                      value.length <= 6) {
+                                    return 'Enter a valid Password (min 6 char)';
+                                  } else {
+                                    return null;
+                                  }
+                                },
+                              ),
+                              const SizedBox(
+                                height: 20,
+                              ),
+                              Field(
+                                icon: Icons.key_sharp,
+                                control: _confirmpasswordcontroller,
+                                texthint: 'Confirm Password',
+                                type: TextInputType.visiblePassword,
+                                validate: (value) {
+                                  if (value == null ||
+                                      value.isEmpty ||
+                                      _passwordController.text !=
+                                          value.toString()) {
+                                    return 'Password does not match';
+                                  } else {
+                                    return null;
+                                  }
+                                },
+                              ),
+                              const SizedBox(
+                                height: 20,
+                              ),
+                            ],
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                "upload photo :",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                ),
+                              ),
+                              ElevatedButton(
+                                  onPressed: () async {
+                                    img = await _picker.pickImage(
+                                        source: ImageSource.gallery);
+                                    setState(() {});
+                                  },
+                                  child: const Text("Upload"))
+                            ],
+                          ),
+                          img != null
+                              ? Image(
+                                  height: 100,
+                                  image: FileImage(File(img!.path)))
+                              : const SizedBox(
+                                  height: 150,
+                                ),
+                          // Spacer(),
+                        ],
+                      )),
                 )),
-          )),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Center(
+                child: Row(
+              children: [
+                Expanded(
+                    child: ElevatedButton(
+                        onPressed: () {
+                          if (img == null) {
+                            Get.snackbar(
+                                'Image not available', 'Please Upload Image');
+                          } else {
+                            signup(_emailcontroller.text.trim(),
+                                _passwordController.text.trim());
+                          }
+                        },
+                        child: const Text("Submit"))),
+              ],
+            )),
+          )
         ],
       ),
     );
@@ -488,6 +448,15 @@ class _RegisterMoreDetailsState extends State<RegisterMoreDetails> {
   }
 
   postDetailsToFirebaseStore() async {
+    if (img != null) {
+      File file = File(img!.path);
+      final ref =
+          FirebaseStorage.instance.ref().child("doctor/${DateTime.now()}");
+      uploadTask = ref.putFile(file);
+
+      await uploadTask
+          ?.then((snap) async => image = await snap.ref.getDownloadURL());
+    }
     FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
     User? user = _auth.currentUser;
     DoctorModel doctormodel = DoctorModel();

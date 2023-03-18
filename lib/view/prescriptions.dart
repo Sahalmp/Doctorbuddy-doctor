@@ -1,15 +1,26 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:prodoctor/colors.dart';
-import 'package:prodoctor/constants.dart';
+import 'package:get/get.dart';
+import 'package:prodoctor/model/colors.dart';
+import 'package:prodoctor/model/constants.dart';
+import 'package:prodoctor/view/editPrescribescreen.dart';
+import 'package:prodoctor/view/prescribescreen.dart';
 
 class PrescriptionScreen extends StatelessWidget {
   const PrescriptionScreen({Key? key, required this.predata}) : super(key: key);
-  final List predata;
+  final DocumentSnapshot predata;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
+        actions: [
+          IconButton(
+              onPressed: () {
+                Get.to(() => EditPrescribe(data: predata));
+              },
+              icon: const Icon(Icons.edit))
+        ],
         centerTitle: true,
         title: const Text(
           "Prescriptions",
@@ -24,7 +35,7 @@ class PrescriptionScreen extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: ListView.separated(
-                  itemCount: predata.length,
+                  itemCount: predata['pdata'].length,
                   separatorBuilder: (context, index) => gheight_10,
                   itemBuilder: (context, index) {
                     return Container(
@@ -37,7 +48,7 @@ class PrescriptionScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              predata[index]['drug'],
+                              predata['pdata'][index]['drug'],
                               style: TextStyle(
                                   color: primary,
                                   fontSize: 20,
@@ -49,7 +60,8 @@ class PrescriptionScreen extends StatelessWidget {
                                 Expanded(flex: 1, child: Text('Usage:')),
                                 Expanded(
                                     flex: 2,
-                                    child: Text(predata[index]['usage'])),
+                                    child:
+                                        Text(predata['pdata'][index]['usage'])),
                               ],
                             ),
                             Row(
@@ -57,13 +69,17 @@ class PrescriptionScreen extends StatelessWidget {
                                 Expanded(flex: 1, child: Text('Duration:')),
                                 Expanded(
                                     flex: 2,
-                                    child: Text(predata[index]['duration'])),
+                                    child: Text(
+                                        predata['pdata'][index]['duration'])),
                               ],
                             ),
                             Row(
                               children: [
                                 Expanded(flex: 1, child: Text('Remarks:')),
-                                Expanded(flex: 2, child: Text('')),
+                                Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                        predata['pdata'][index]['remark'])),
                               ],
                             ),
                           ],

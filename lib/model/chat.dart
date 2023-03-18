@@ -4,6 +4,7 @@ class ChatMessages {
   int timestamp;
   String content;
   String type;
+  bool read;
 
   ChatMessages({
     required this.type,
@@ -11,6 +12,7 @@ class ChatMessages {
     required this.patient,
     required this.timestamp,
     required this.content,
+    required this.read,
   });
 
   Map<String, dynamic> toMap() {
@@ -20,16 +22,17 @@ class ChatMessages {
       'patient': patient,
       'timestamp': timestamp,
       'content': content,
+      'read': read
     };
   }
 
   factory ChatMessages.fromMap(map) {
     return ChatMessages(
-      type: map['type'],
-      doctor: map['doctor'],
-      patient: map['patient'],
-      timestamp: map['timestamp'],
-      content: map['content'],
-    );
+        type: map['type'],
+        doctor: map['doctor'],
+        patient: map['patient'],
+        timestamp: map['timestamp'],
+        content: map['content'],
+        read: map['read']);
   }
 }

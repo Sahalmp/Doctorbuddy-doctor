@@ -3,27 +3,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:prodoctor/colors.dart';
-import 'package:prodoctor/patientdetails.dart';
+import 'package:prodoctor/model/colors.dart';
+import 'package:prodoctor/view/patientdetails.dart';
+
+import '../model/constants.dart';
 
 class HospitalAppointments extends StatelessWidget {
   HospitalAppointments({Key? key, required this.hospital}) : super(key: key);
   final String hospital;
   bool checkdivider = false;
-  List<String> months = [
-    'Janaury',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December'
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +45,14 @@ class HospitalAppointments extends StatelessWidget {
               if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
               }
+              if (snapshot.data!.docs.isEmpty) {
+                return Column(
+                  children: const [
+                    gheight_50,
+                    Center(child: Text('No appointments')),
+                  ],
+                );
+              }
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -84,9 +80,13 @@ class HospitalAppointments extends StatelessWidget {
                         itemCount: snapshot.data!.docs.length,
                         itemBuilder: (context, index) {
                           checkdivider = false;
+
                           if (todaysdate ==
                                   snapshot.data!.docs[index]['date'] &&
                               index == 0) {
+                            checkdivider = true;
+                          }
+                          if (index == 0) {
                             checkdivider = true;
                           }
                           if (snapshot.data!.docs[lastIndex]['date'] !=
@@ -148,17 +148,22 @@ class HospitalAppointments extends StatelessWidget {
                                       padding: const EdgeInsets.all(8.0),
                                       child: ListTile(
                                         onTap: () {
-                                          Get.to(
-                                              () => PatientDetails(data: ds,appointmentData:appdoc));
+                                          Get.to(() => PatientDetails(
+                                              uid: ds['uid'],
+                                              appointmentData: appdoc));
                                         },
                                         shape: RoundedRectangleBorder(
                                             borderRadius:
                                                 BorderRadius.circular(10)),
                                         tileColor: whiteColor,
-                                        leading: const CircleAvatar(
-                                          backgroundColor: primary,
-                                          child: Icon(Icons.person),
-                                        ),
+                                        leading: ds['image'] == null
+                                            ? const CircleAvatar(
+                                                backgroundColor: primary,
+                                                child: Icon(Icons.person))
+                                            : CircleAvatar(
+                                                backgroundImage:
+                                                    NetworkImage(ds['image']),
+                                              ),
                                         title: Text(
                                           ds['name'],
                                         ),

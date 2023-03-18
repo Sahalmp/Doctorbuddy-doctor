@@ -1,10 +1,14 @@
+import 'dart:math';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:prodoctor/homescreen.dart';
-import 'package:prodoctor/register_widget.dart';
+import 'package:prodoctor/model/constants.dart';
+import 'package:prodoctor/view/homescreen.dart';
+import 'package:prodoctor/view/register_widget.dart';
+import 'package:prodoctor/view/resetpassword.dart';
 
-import 'colors.dart';
+import '../model/colors.dart';
 
 class LoginScreen extends StatelessWidget {
   LoginScreen({Key? key}) : super(key: key);
@@ -13,10 +17,6 @@ class LoginScreen extends StatelessWidget {
   final _passController = TextEditingController();
   final auth = FirebaseAuth.instance;
   final formkey = GlobalKey<FormState>();
-  String emailpattern =
-      r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]"
-      r"{0,253}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]"
-      r"{0,253}[a-zA-Z0-9])?)*$";
 
   @override
   Widget build(BuildContext context) {
@@ -91,6 +91,23 @@ class LoginScreen extends StatelessWidget {
                       control: _passController,
                       texthint: 'Password',
                       type: TextInputType.visiblePassword),
+                  gheight_10,
+                  Row(
+                    children: [
+                      const Spacer(),
+                      InkWell(
+                        onTap: () {
+                          Get.to(() => ResetScreen());
+                        },
+                        child: const Text(
+                          "Forgot Password",
+                          style: TextStyle(
+                              color: primary,
+                              decoration: TextDecoration.underline),
+                        ),
+                      ),
+                    ],
+                  )
                 ],
               ),
             ),
@@ -107,7 +124,7 @@ class LoginScreen extends StatelessWidget {
                                       email: _userController.text,
                                       password: _passController.text)
                                   .then((uid) {
-                                Get.to(() => HomeScreen());
+                                Get.to(() => const HomeScreen());
                               }).catchError((e) {
                                 Get.snackbar(
                                   "Invalid Credentials ",
@@ -145,6 +162,26 @@ class LoginScreen extends StatelessWidget {
       ),
     ));
   }
+}
+
+Future resetPassword({required String email}) async {
+  print('email');
+  await FirebaseAuth.instance
+      .sendPasswordResetEmail(email: email)
+      .then((value) => Get.snackbar(
+          isDismissible: true,
+          colorText: whiteColor,
+          duration: Duration(minutes: 1),
+          'Reset request send',
+          'A reset request has been send to $email',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green[900]))
+      .catchError((e) => Get.snackbar('Error', e.toString(),
+          isDismissible: true,
+          snackPosition: SnackPosition.BOTTOM,
+          colorText: whiteColor,
+          duration: Duration(seconds: 10),
+          backgroundColor: Colors.red[900]));
 }
 
 class Field extends StatelessWidget {

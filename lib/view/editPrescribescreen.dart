@@ -2,15 +2,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:prodoctor/colors.dart';
-import 'package:prodoctor/constants.dart';
+import 'package:prodoctor/model/colors.dart';
+import 'package:prodoctor/model/constants.dart';
 import 'package:prodoctor/controllers/prescribecontroller.dart';
 import 'package:prodoctor/model/prescriptionmodel.dart';
 
-class PrescribeScreen extends StatelessWidget {
-  PrescribeScreen({Key? key, required this.data, required this.appointmentdata})
-      : super(key: key);
-  final DocumentSnapshot data, appointmentdata;
+class EditPrescribe extends StatelessWidget {
+  EditPrescribe({
+    Key? key,
+    required this.data,
+  }) : super(key: key);
+  final DocumentSnapshot data;
   final PrescribeContoller prescribeContoller = Get.put(PrescribeContoller());
   final TextEditingController drugcontroller = TextEditingController(),
       usagecontroller = TextEditingController(),
@@ -18,6 +20,7 @@ class PrescribeScreen extends StatelessWidget {
       remarkscontroller = TextEditingController();
   @override
   Widget build(BuildContext context) {
+    prescribeContoller.editlist(data['pdata']);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: primary,
@@ -35,32 +38,19 @@ class PrescribeScreen extends StatelessWidget {
               ),
               onPressed: () async {
                 Get.back();
+                Get.back();
+                print(data.id);
 
                 await FirebaseFirestore.instance
                     .collection('prescription')
-                    .add({
+                    .doc(data.id)
+                    .update({
                   'pdata': prescribeContoller.prescriptionlist,
                   'doctorid': FirebaseAuth.instance.currentUser!.uid,
-                  'patientid': data['uid'],
-                  'date': appointmentdata['date'],
-                  'reason': appointmentdata['reason']
-                }).then((value) {
-                  FirebaseFirestore.instance
-                      .collection('pusers')
-                      .doc(data['uid'])
-                      .collection('appointments')
-                      .doc(appointmentdata.id)
-                      .delete();
-                  FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(FirebaseAuth.instance.currentUser!.uid)
-                      .collection('appointments')
-                      .doc(appointmentdata.id)
-                      .delete();
-
-                  return Get.snackbar("added", 'Prescribed successfully');
-                }).catchError(
-                        (e) => Get.snackbar("Error Adding", e.toString()));
+                  'patientid': data['patientid'],
+                  'date': data['date'],
+                  'reason': data['reason']
+                });
               },
               child: const Text("Save"),
             ),
@@ -186,64 +176,91 @@ class PrescribeScreen extends StatelessWidget {
                 itemBuilder: (context, index) {
                   print(prescribeContoller.prescriptionlist[index]['drug']);
 
-                  return Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                            border: Border.all(),
-                            borderRadius: BorderRadius.circular(10),
-                            color: whiteColor),
-                        child: Padding(
-                          padding: const EdgeInsets.all(10.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                prescribeContoller.prescriptionlist[index]
-                                    ['drug'],
-                                style: const TextStyle(
-                                    color: primary,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              const Divider(),
-                              Row(
-                                children: [
-                                  Expanded(flex: 1, child: Text('Usage:')),
-                                  Expanded(
-                                      flex: 2,
-                                      child: Text(prescribeContoller
-                                          .prescriptionlist[index]['usage'])),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  Expanded(flex: 1, child: Text('Duration:')),
-                                  Expanded(
-                                      flex: 2,
-                                      child: Text(prescribeContoller
-                                              .prescriptionlist[index]
-                                          ['duration'])),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  const Expanded(
-                                      flex: 1, child: Text('Remarks:')),
-                                  Expanded(
-                                      flex: 2,
-                                      child: Text(prescribeContoller
-                                          .prescriptionlist[index]['remark'])),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ));
+                  return MedicinePrescribtion(
+                      index: index, prescribeContoller: prescribeContoller);
                 }))
           ],
         ),
       ),
     );
+  }
+}
+
+class MedicinePrescribtion extends StatelessWidget {
+  const MedicinePrescribtion({
+    Key? key,
+    required this.prescribeContoller,
+    required this.index,
+  }) : super(key: key);
+  final int index;
+  final PrescribeContoller prescribeContoller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Container(
+          decoration: BoxDecoration(
+              border: Border.all(),
+              borderRadius: BorderRadius.circular(10),
+              color: whiteColor),
+          child: Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      prescribeContoller.prescriptionlist[index]['drug'],
+                      style: const TextStyle(
+                          color: primary,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold),
+                    ),
+                    InkWell(
+                        onTap: () {
+                          prescribeContoller.prescriptionlist.removeAt(index);
+                        },
+                        child: Icon(
+                          Icons.delete,
+                          size: 15,
+                          color: Colors.grey,
+                        ))
+                  ],
+                ),
+                const Divider(),
+                Row(
+                  children: [
+                    Expanded(flex: 1, child: Text('Usage:')),
+                    Expanded(
+                        flex: 2,
+                        child: Text(prescribeContoller.prescriptionlist[index]
+                            ['usage'])),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Expanded(flex: 1, child: Text('Duration:')),
+                    Expanded(
+                        flex: 2,
+                        child: Text(prescribeContoller.prescriptionlist[index]
+                            ['duration'])),
+                  ],
+                ),
+                Row(
+                  children: [
+                    const Expanded(flex: 1, child: Text('Remarks:')),
+                    Expanded(
+                        flex: 2,
+                        child: Text(prescribeContoller.prescriptionlist[index]
+                            ['remark'])),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ));
   }
 }

@@ -3,10 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:get/get.dart';
-import 'package:prodoctor/colors.dart';
-import 'package:prodoctor/constants.dart';
+import 'package:prodoctor/model/colors.dart';
+import 'package:prodoctor/model/constants.dart';
+import 'package:prodoctor/view/leavescreen.dart';
 import 'package:prodoctor/model/category_model.dart';
 import 'package:prodoctor/model/hospital_model.dart';
+import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
 class AddetailScreen extends StatelessWidget {
   AddetailScreen({Key? key}) : super(key: key);
@@ -20,6 +22,9 @@ class AddetailScreen extends StatelessWidget {
   final TextEditingController stimeCtl = TextEditingController();
   final TextEditingController etimeCtl = TextEditingController();
   final TextEditingController _placecontroller = TextEditingController();
+  final TextEditingController _feecontroller = TextEditingController();
+  final TextEditingController _tokencontroller = TextEditingController();
+
   String? _selectedhospital;
   @override
   Widget build(BuildContext context) {
@@ -160,49 +165,45 @@ class AddetailScreen extends StatelessWidget {
                                         ]))),
                           ],
                         ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 50.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Appointment Fee'),
+                              TextFormField(
+                                keyboardType: TextInputType.number,
+                                controller: _feecontroller,
+                                decoration: InputDecoration(
+                                  prefixIcon: const Icon(Icons.attach_money),
+                                  hintText: "Appointment Fee",
+                                  isDense: true,
+                                  filled: true,
+                                  fillColor: whiteColor,
+                                  enabledBorder: OutlineInputBorder(
+                                      borderSide:
+                                          const BorderSide(color: primary),
+                                      borderRadius: BorderRadius.circular(10)),
+                                  border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10)),
+                                ),
+                                validator: (value) {
+                                  if (value!.isEmpty) {
+                                    return 'Field cannot be empty';
+                                  } else {
+                                    return null;
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        gheight_10,
                         Center(
                           child: FloatingActionButton(
                             onPressed: () async {
                               if (_formKey.currentState!.validate()) {
-                                DocumentSnapshot ds = await firebaseFirestore
-                                    .collection('hospitals')
-                                    .doc(_hospitalcontroller.text)
-                                    .get();
-                                print(ds.exists);
-                                if (!ds.exists) {
-                                  HospitalModel hospitalModel = HospitalModel();
-                                  hospitalModel.name = _hospitalcontroller.text;
-                                  hospitalModel.place = _placecontroller.text;
-
-                                  await firebaseFirestore
-                                      .collection('hospitals')
-                                      .doc(_hospitalcontroller.text)
-                                      .set(hospitalModel.toMap());
-                                  Get.snackbar(_hospitalcontroller.text,
-                                      'Successfully added');
-                                }
-                                await firebaseFirestore
-                                    .collection('users')
-                                    .doc(user!.uid)
-                                    .collection('timing')
-                                    .doc(_hospitalcontroller.text)
-                                    .set({
-                                  "hospital": _hospitalcontroller.text,
-                                  "start": stimeCtl.text,
-                                  "end": etimeCtl.text
-                                });
-
-                                await firebaseFirestore
-                                    .collection('users')
-                                    .doc(user.uid)
-                                    .update({
-                                  "hospital": FieldValue.arrayUnion([
-                                    {
-                                      'name': _hospitalcontroller.text,
-                                      'status': status
-                                    }
-                                  ])
-                                });
+                                await showdialogm(context, user, status);
                               }
                             },
                             backgroundColor: primary,
@@ -254,13 +255,70 @@ class AddetailScreen extends StatelessWidget {
                                               padding:
                                                   const EdgeInsets.symmetric(
                                                       horizontal: 8.0),
-                                              child: Text(
-                                                doc['hospital'],
-                                                style: const TextStyle(
-                                                    color: primary,
-                                                    fontSize: 20,
-                                                    fontWeight:
-                                                        FontWeight.bold),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    doc['hospital'],
+                                                    style: const TextStyle(
+                                                        color: primary,
+                                                        fontSize: 20,
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  ),
+                                                  PopupMenuButton<int>(
+                                                    itemBuilder: (context) => [
+                                                      // PopupMenuItem 1
+                                                      PopupMenuItem(
+                                                        value: 1,
+                                                        // row with 2 children
+                                                        child: Row(
+                                                          children: const [
+                                                            Icon(Icons.star),
+                                                            gwidth_10,
+                                                            Text("Mark Leave")
+                                                          ],
+                                                        ),
+                                                      ),
+
+                                                      PopupMenuItem(
+                                                        value: 2,
+                                                        child: Row(
+                                                          children: const [
+                                                            Icon(Icons.delete),
+                                                            SizedBox(
+                                                              width: 10,
+                                                            ),
+                                                            Text("Delete")
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                    elevation: 2,
+                                                    onSelected: (value) async {
+                                                      if (value == 1) {
+                                                        Get.to(
+                                                            () => LeaveScreen(
+                                                                  docid: doc.id,
+                                                                ));
+                                                      } else if (value == 2) {
+                                                        await FirebaseFirestore
+                                                            .instance
+                                                            .collection('users')
+                                                            .doc(FirebaseAuth
+                                                                .instance
+                                                                .currentUser!
+                                                                .uid)
+                                                            .collection(
+                                                                'timing')
+                                                            .doc(doc.id).delete();
+                                                            
+                                                      }
+                                                    },
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                             const Divider(),
@@ -298,6 +356,76 @@ class AddetailScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  showdialogm(BuildContext context, User? user, bool status) async {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirm'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text(
+                    'Add ${_hospitalcontroller.text} to my consult locations?'),
+                Text('Confirm Timing ${stimeCtl.text} to ${etimeCtl.text}'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Yes'),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                DocumentSnapshot ds = await firebaseFirestore
+                    .collection('hospitals')
+                    .doc(_hospitalcontroller.text)
+                    .get();
+                print(ds.exists);
+                if (!ds.exists) {
+                  HospitalModel hospitalModel = HospitalModel();
+                  hospitalModel.name = _hospitalcontroller.text;
+                  hospitalModel.place = _placecontroller.text;
+
+                  await firebaseFirestore
+                      .collection('hospitals')
+                      .doc(_hospitalcontroller.text)
+                      .set(hospitalModel.toMap());
+                  Get.snackbar(_hospitalcontroller.text, 'Successfully added');
+                }
+                await firebaseFirestore
+                    .collection('users')
+                    .doc(user!.uid)
+                    .collection('timing')
+                    .doc(_hospitalcontroller.text)
+                    .set({
+                  "hospital": _hospitalcontroller.text,
+                  "start": stimeCtl.text,
+                  "end": etimeCtl.text,
+                  "fee": _feecontroller.text
+                });
+
+                await firebaseFirestore
+                    .collection('users')
+                    .doc(user.uid)
+                    .update({
+                  "hospital": FieldValue.arrayUnion([
+                    {'name': _hospitalcontroller.text, 'status': status}
+                  ])
+                });
+              },
+            ),
+            TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text('No'))
+          ],
+        );
+      },
     );
   }
 }

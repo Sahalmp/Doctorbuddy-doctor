@@ -7,4 +7,8 @@ class PrescribeContoller extends GetxController {
     prescriptionlist.add(prescribtion.toMap());
     update();
   }
+
+  void editlist(data) {
+    prescriptionlist.addAll(data);
+  }
 }
